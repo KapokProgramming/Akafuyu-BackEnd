@@ -17,7 +17,7 @@ import (
 func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/", HomeHandler)
-	r.HandleFunc("/employees", EmployeesHandler)
+	r.HandleFunc("/test", TestHandler)
 
 	r.NotFoundHandler = http.HandlerFunc(emptyJsonHandler)
 	fmt.Println("Listening on :7700")
@@ -29,16 +29,14 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, `ola`)
 }
 
-func EmployeesHandler(w http.ResponseWriter, r *http.Request) {
+func TestHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	db, err := sql.Open("mysql", "root:@/employees")
+	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", os.Getenv("DBUSER"), os.Getenv("DBPASSWORD"), os.Getenv("DBHOST"), os.Getenv("DBPORT"), os.Getenv("DB")))
 	if err != nil {
 		panic(err)
 	}
 	db.SetConnMaxLifetime(time.Minute * 3)
-	db.SetMaxOpenConns(10)
-	db.SetMaxIdleConns(10)
-	query := "SELECT * FROM employees"
+	query := "SELECT NOW();"
 	rows, err := db.Query(query)
 	if err != nil {
 		panic(err)

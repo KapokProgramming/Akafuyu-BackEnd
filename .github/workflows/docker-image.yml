@@ -19,3 +19,4 @@ jobs:
         password: ${{ secrets.PASSWORD }}
         port: ${{ secrets.PORT }}
         script: |
+          docker build . --file Dockerfile --tag my-image-name:$(date +%s)

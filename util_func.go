@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func JSONifyRows(rows *sql.Rows) []byte {
+func RowsToMap(rows *sql.Rows) []map[string]interface{} {
 	columns, err := rows.Columns()
 	if err != nil {
 		panic(err)
@@ -15,7 +15,7 @@ func JSONifyRows(rows *sql.Rows) []byte {
 	count := len(columns)
 	values := make([]interface{}, count)
 	valuePtrs := make([]interface{}, count)
-	masterData := make([]map[string]interface{}, 0)
+	rows_map := make([]map[string]interface{}, 0)
 	for rows.Next() {
 		for i := 0; i < count; i++ {
 			valuePtrs[i] = &values[i]
@@ -33,13 +33,9 @@ func JSONifyRows(rows *sql.Rows) []byte {
 			}
 			entry[col] = v
 		}
-		masterData = append(masterData, entry)
+		rows_map = append(rows_map, entry)
 	}
-	out, err := json.Marshal(masterData)
-	if err != nil {
-		panic(err)
-	}
-	return out
+	return rows_map
 }
 
 func StandardResponseWriter(w http.ResponseWriter, res StandardResponse) {
@@ -49,4 +45,12 @@ func StandardResponseWriter(w http.ResponseWriter, res StandardResponse) {
 		return
 	}
 	fmt.Fprintf(w, string(b))
+}
+
+func JSONRowsToString(rows_map []map[string]interface{}) []byte {
+	out, err := json.Marshal(rows_map)
+	if err != nil {
+		panic(err)
+	}
+	return out
 }

@@ -36,7 +36,7 @@ func PostsHandler(w http.ResponseWriter, r *http.Request) {
 			panic(err)
 		}
 		res.Status = "success"
-		res.Data = string(JSONifyRows(rows))
+		res.Data = RowsToMap(rows)
 		break
 	case "POST":
 		var post_data PostData
@@ -80,7 +80,7 @@ func TestHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		res.Status = "error"
 	} else {
-		res.Data = string(JSONifyRows(rows))
+		res.Data = RowsToMap(rows)
 	}
 	StandardResponseWriter(w, res)
 }

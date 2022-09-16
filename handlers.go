@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -14,7 +15,59 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	var res StandardResponse
 	res.Status = "success"
-	res.Data = "test"
+	res.Data = "running"
+	StandardResponseWriter(w, res)
+}
+
+func RegisterHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	var res StandardResponse
+	res.Status = "fail"
+	switch r.Method {
+	case "POST":
+		var register_data RegisterData
+		err := json.NewDecoder(r.Body).Decode(&register_data)
+		if err != nil {
+			res.Status = "error"
+			panic(err)
+		}
+		db := createConnectionToDatabase()
+		query := "INSERT INTO users (username, password, email) VALUES (?, ?, ?);"
+		db.Exec(query, register_data.Username, register_data.Password, register_data.Email)
+		res.Status = "success"
+	}
+	StandardResponseWriter(w, res)
+}
+
+func LoginHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	var res StandardResponse
+	res.Status = "fail"
+	switch r.Method {
+	case "POST":
+		var login_data LoginData
+		err := json.NewDecoder(r.Body).Decode(&login_data)
+		if err != nil {
+			panic(err)
+		}
+		db := createConnectionToDatabase()
+		query := "SELECT user_id FROM users WHERE username=? AND password=?;"
+		var user_id int
+		err = db.QueryRow(query, login_data.Username, login_data.Password).Scan(&user_id)
+		switch {
+		case err == sql.ErrNoRows:
+			res.Status = "error"
+			res.Data = "Wrong Login Data"
+		case err != nil:
+			panic(err)
+		default:
+			res.Status = "success"
+			res.Data, err = CreateJWT(user_id)
+			if err != nil {
+				panic(err)
+			}
+		}
+	}
 	StandardResponseWriter(w, res)
 }
 
@@ -30,14 +83,14 @@ func PostsHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			page_num = 0
 		}
-		query := fmt.Sprintf("SELECT * FROM posts LIMIT %d,10;", page_num*10)
-		rows, err := db.Query(query)
+		query := fmt.Sprintf("SELECT * FROM posts LIMIT ?,10;")
+		rows, err := db.Query(query, page_num*10)
 		if err != nil {
 			panic(err)
 		}
+		defer rows.Close()
 		res.Status = "success"
 		res.Data = RowsToMap(rows)
-		break
 	case "POST":
 		var post_data PostData
 		err := json.NewDecoder(r.Body).Decode(&post_data)
@@ -47,13 +100,15 @@ func PostsHandler(w http.ResponseWriter, r *http.Request) {
 		query := "INSERT INTO posts (title, raw_body) VALUES (?, ?);"
 		db.Exec(query, post_data.Title, post_data.RawBody)
 		res.Status = "success"
-		break
 	}
 	StandardResponseWriter(w, res)
 }
 
 func JSONHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	if r.Method != "POST" {
+		return
+	}
 	var res StandardResponse
 	res.Status = "success"
 	reqbody, err := ioutil.ReadAll(r.Body)
@@ -72,6 +127,9 @@ func JSONHandler(w http.ResponseWriter, r *http.Request) {
 
 func TestHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	if r.Method != "GET" {
+		return
+	}
 	var res StandardResponse
 	res.Status = "success"
 	query := "SELECT NOW();"
@@ -85,7 +143,7 @@ func TestHandler(w http.ResponseWriter, r *http.Request) {
 	StandardResponseWriter(w, res)
 }
 
-func emptyJsonHandler(w http.ResponseWriter, r *http.Request) {
+func EmptyJsonHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	fmt.Fprintf(w, `{}`)
 }

@@ -102,5 +102,5 @@ jobs:
             docker stop akafuyu-backend
             docker rm akafuyu-backend
             docker pull ${{ steps.meta.outputs.tags }}
-            docker run -d -p 7700:7700 --env DBUSER=${{ secrets.DB_USER }} --env DBPASSWORD=${{ secrets.DB_PASSWORD }} --env DBHOST=${{ secrets.DB_HOST }} --restart always --name akafuyu-backend ${{ steps.meta.outputs.tags }}
+            docker run -d -p 7700:7700 --env DBUSER=${{ secrets.DB_USER }} --env DBPASSWORD=${{ secrets.DB_PASSWORD }} --env DBHOST=${{ secrets.DB_HOST }} --env JWT_SECRET=${{ secrets.JWT_SECRET }} --restart always --name akafuyu-backend ${{ steps.meta.outputs.tags }}
 

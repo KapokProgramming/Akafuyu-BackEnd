@@ -15,6 +15,9 @@ import (
 )
 
 func main() {
+	fmt.Printf("$env:DBHOST = %s", os.Getenv("DB_HOST"))
+	fmt.Printf("$env:DBUSER = %s", os.Getenv("DB_USER"))
+	fmt.Printf("$env:DBPASSWORD = %s", os.Getenv("DB_PASSWORD"))
 	r := mux.NewRouter()
 	r.HandleFunc("/", HomeHandler)
 	r.HandleFunc("/test", TestHandler)

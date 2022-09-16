@@ -1,4 +1,4 @@
-name: Docker
+name: Docker Publish and Linode build
 
 # This workflow uses actions that are not certified by GitHub.
 # They are provided by a third-party and are governed by
@@ -89,3 +89,18 @@ jobs:
         # This step uses the identity token to provision an ephemeral certificate
         # against the sigstore community Fulcio instance.
         run: echo "${{ steps.meta.outputs.tags }}" | xargs -I {} cosign sign {}@${{ steps.build-and-push.outputs.digest }}
+
+      - name: Build on Linode Server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.LINODE_HOST }}
+          username: ${{ secrets.LINODE_USER }}
+          password: ${{ secrets.LINODE_PASSWORD }}
+          port: ${{ secrets.LINODE_PORT }}
+          script: |
+            docker login ghcr.io --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }}
+            docker stop  akafuyu-backend
+            docker rm  akafuyu-backend
+            docker pull ${{ steps.meta.outputs.tags }}
+            docker run -d -p 7700:7700 --name akafuyu-backend ${{ steps.meta.outputs.tags }}
+

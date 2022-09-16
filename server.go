@@ -18,6 +18,7 @@ func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/", HomeHandler)
 	r.HandleFunc("/test", TestHandler)
+	r.HandleFunc("/json", JSONHandler)
 
 	r.NotFoundHandler = http.HandlerFunc(emptyJsonHandler)
 	fmt.Println("Listening on :7700")
@@ -27,6 +28,16 @@ func main() {
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	fmt.Fprintf(w, `ola`)
+}
+
+func JSONHandler(w http.ResponseWriter, r *http.Request) {
+	body := make([]map[string]interface{}, 0)
+	err := json.NewDecoder(r.Body).Decode(&body)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("%+v", body)
+	fmt.Fprintf(w, "body: %+v", body)
 }
 
 func TestHandler(w http.ResponseWriter, r *http.Request) {

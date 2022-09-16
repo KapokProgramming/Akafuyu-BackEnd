@@ -19,5 +19,5 @@ func main() {
 
 	r.NotFoundHandler = http.HandlerFunc(emptyJsonHandler)
 	fmt.Println("Listening on :7700")
-	log.Fatal(http.ListenAndServe(":7700", handlers.LoggingHandler(os.Stdout, r)))
+	log.Fatal(http.ListenAndServe(":7700", handlers.LoggingHandler(os.Stdout, EnableCORS(r))))
 }

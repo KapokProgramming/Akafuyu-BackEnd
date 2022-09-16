@@ -98,7 +98,7 @@ jobs:
           password: ${{ secrets.LINODE_PASSWORD }}
           port: ${{ secrets.LINODE_PORT }}
           script: |
-            docker login ghcr.io --username ${{ github.actor }} }} --password ${{ secrets.GITHUB_TOKEN }}
+            docker login ghcr.io --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }}
             docker pull ${{ steps.meta.outputs.tags }}
             docker run -d -p 7700:7700 ${{ steps.meta.outputs.tags }} --name akafuyu-backend
 

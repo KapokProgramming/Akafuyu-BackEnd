@@ -99,8 +99,8 @@ jobs:
           port: ${{ secrets.LINODE_PORT }}
           script: |
             docker login ghcr.io --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }}
-            docker stop  akafuyu-backend
-            docker rm  akafuyu-backend
+            docker stop akafuyu-backend
+            docker rm akafuyu-backend
             docker pull ${{ steps.meta.outputs.tags }}
             docker run -d -p 7700:7700 --name akafuyu-backend ${{ steps.meta.outputs.tags }}
 

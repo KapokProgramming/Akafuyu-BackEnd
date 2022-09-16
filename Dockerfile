@@ -6,9 +6,9 @@ COPY go.mod ./
 COPY go.sum ./
 RUN go mod download
 
-ENV DBHOST host.docker.internal
-ENV DBUSER root
-ENV DBPASSWORD 4321
+ENV DBHOST ${{ secrets.DB_HOST }}
+ENV DBUSER ${{ secrets.DB_USER }}
+ENV DBPASSWORD ${{ secrets.DB_PASSWORD }}
 ENV DBPORT 3306
 ENV DB akafuyu
 

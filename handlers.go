@@ -39,14 +39,43 @@ func PostsHandler(w http.ResponseWriter, r *http.Request) {
 		res.Data = RowsToMap(rows)
 		break
 	case "POST":
+		var id int
 		var post_data PostData
+		res.Status = "success"
 		err := json.NewDecoder(r.Body).Decode(&post_data)
 		if err != nil {
+			res.Status = "error"
 			panic(err)
 		}
-		query := "INSERT INTO posts (title, raw_body) VALUES ('?', '?');"
-		db.Exec(query, post_data.Title, post_data.RawBody)
-		res.Status = "success"
+		tx, err := db.Begin()
+		if err != nil {
+			res.Status = "error"
+			panic(err)
+		}
+		query, err := tx.Prepare(
+			`INSERT INTO posts (
+				title,
+				raw_body,
+			) VALUES ($1, $2)
+			RETURNING id`)
+		if err != nil {
+			res.Status = "error"
+			panic(err)
+		}
+		defer query.Close()
+		err = query.QueryRow(
+			post_data.Title,
+			post_data.RawBody,
+		).Scan(&id)
+		if err != nil {
+			res.Status = "error"
+			panic(err)
+		}
+		err = tx.Commit()
+		if err != nil {
+			res.Status = "error"
+			panic(err)
+		}
 		break
 	}
 	StandardResponseWriter(w, res)

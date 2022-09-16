@@ -8,6 +8,7 @@ RUN go mod download
 
 ENV DBPORT 3306
 ENV DB akafuyu
+ENV ORIGIN_ALLOWED *
 
 COPY ./ ./
 

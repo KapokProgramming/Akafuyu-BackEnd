@@ -98,12 +98,9 @@ jobs:
           password: ${{ secrets.LINODE_PASSWORD }}
           port: ${{ secrets.LINODE_PORT }}
           script: |
-            export DBHOST=${{ secrets.DB_HOST }}
-            export DBUSER=${{ secrets.DB_USER }}
-            export DBPASSWORD=${{ secrets.DB_PASSWORD }}
             docker login ghcr.io --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }}
             docker stop akafuyu-backend
             docker rm akafuyu-backend
             docker pull ${{ steps.meta.outputs.tags }}
-            docker run -d -p 7700:7700 --name akafuyu-backend ${{ steps.meta.outputs.tags }}
+            docker run -d -p 7700:7700 --env DBUSER=${{ secrets.DB_USER }} --env DBPASSWORD=${{ secrets.DB_PASSWORD }} --env DBHOST=${{ secrets.DB_HOST }} --restart always --name akafuyu-backend ${{ steps.meta.outputs.tags }}
 

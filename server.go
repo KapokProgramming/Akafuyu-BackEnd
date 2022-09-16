@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -15,9 +16,6 @@ import (
 )
 
 func main() {
-	fmt.Printf("$env:DBHOST = %s", os.Getenv("DB_HOST"))
-	fmt.Printf("$env:DBUSER = %s", os.Getenv("DB_USER"))
-	fmt.Printf("$env:DBPASSWORD = %s", os.Getenv("DB_PASSWORD"))
 	r := mux.NewRouter()
 	r.HandleFunc("/", HomeHandler)
 	r.HandleFunc("/test", TestHandler)
@@ -30,12 +28,17 @@ func main() {
 
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	fmt.Fprintf(w, `ola`)
+	fmt.Fprintf(w, `{ "message": "Hello World" }`)
 }
 
 func JSONHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	reqbody, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		panic(err)
+	}
 	body := make([]map[string]interface{}, 0)
-	err := json.NewDecoder(r.Body).Decode(&body)
+	err = json.Unmarshal(reqbody, &body)
 	if err != nil {
 		panic(err)
 	}

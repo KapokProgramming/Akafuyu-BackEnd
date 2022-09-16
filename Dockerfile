@@ -6,6 +6,12 @@ COPY go.mod ./
 COPY go.sum ./
 RUN go mod download
 
+ENV DBHOST host.docker.internal
+ENV DBUSER root
+ENV DBPASSWORD 4321
+ENV DBPORT 3306
+ENV DB akafuyu
+
 COPY ./ ./
 
 RUN go build -o ./build/server.exe ./server.go

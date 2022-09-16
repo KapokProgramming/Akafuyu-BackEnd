@@ -11,7 +11,7 @@ ENV DB akafuyu
 
 COPY ./ ./
 
-RUN go build -o ./build/server.exe ./server.go
+RUN go build -o ./build/server.exe
 
 EXPOSE 7700
 CMD ["./build/server.exe"]

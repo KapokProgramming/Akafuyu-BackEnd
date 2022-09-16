@@ -37,7 +37,7 @@ func JSONHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	body := make([]map[string]interface{}, 0)
+	var body map[string]interface{}
 	err = json.Unmarshal(reqbody, &body)
 	if err != nil {
 		panic(err)

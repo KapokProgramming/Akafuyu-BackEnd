@@ -1,4 +1,4 @@
-module github.com/ManSmooth/Database-Project-BackEnd
+module github.com/ManSmooth/Akafuyu-BackEnd
 
 go 1.19
 

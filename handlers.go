@@ -37,15 +37,16 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 			panic(err)
 		}
 		db := createConnectionToDatabase()
-		err = db.QueryRow("SELECT username FROM users WHERE username=?", register_data.Username).Scan()
-		switch {
-		case err == sql.ErrNoRows:
+		var count int
+		err = db.QueryRow("SELECT count(*) FROM users WHERE username=?", register_data.Username).Scan(&count)
+		if err != nil {
+			panic(err)
+		}
+		if count == 0 {
 			query := "INSERT INTO users (username, password, email) VALUES (?, ?, ?);"
 			db.Exec(query, register_data.Username, hash_pw, register_data.Email)
 			res.Status = "success"
-		case err != nil:
-			panic(err)
-		default:
+		} else {
 			res.Status = "error"
 			res.Data = "Username already exists"
 		}

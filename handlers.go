@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/ManSmooth/Akafuyu-BackEnd/vendor/github.com/gorilla/mux"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/gorilla/mux"
 )
 
 func HomeHandler(w http.ResponseWriter, r *http.Request) {

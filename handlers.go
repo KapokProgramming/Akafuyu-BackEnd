@@ -77,7 +77,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		case err != nil:
 			panic(err)
 		default:
-			err := ValidatePassword(hash_pw, login_data.Password)
+			err := ValidatePassword(login_data.Password, hash_pw)
 			if err != nil {
 				res.Status = "fail"
 				res.Data = err

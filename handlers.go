@@ -32,10 +32,23 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 			res.Status = "error"
 			panic(err)
 		}
+		hash_pw, err := GetHashedPassword(register_data.Password)
+		if err != nil {
+			panic(err)
+		}
 		db := createConnectionToDatabase()
-		query := "INSERT INTO users (username, password, email) VALUES (?, ?, ?);"
-		db.Exec(query, register_data.Username, register_data.Password, register_data.Email)
-		res.Status = "success"
+		err = db.QueryRow("SELECT username FROM users WHERE username=?", register_data.Username).Scan()
+		switch {
+		case err == sql.ErrNoRows:
+			query := "INSERT INTO users (username, password, email) VALUES (?, ?, ?);"
+			db.Exec(query, register_data.Username, hash_pw, register_data.Email)
+			res.Status = "success"
+		case err != nil:
+			panic(err)
+		default:
+			res.Status = "error"
+			res.Data = "Username already exists"
+		}
 	}
 	StandardResponseWriter(w, res)
 }
@@ -52,9 +65,10 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 			panic(err)
 		}
 		db := createConnectionToDatabase()
-		query := "SELECT user_id FROM users WHERE username=? AND password=?;"
+		query := "SELECT user_id,password FROM users WHERE username=?;"
 		var user_id int
-		err = db.QueryRow(query, login_data.Username, login_data.Password).Scan(&user_id)
+		var hash_pw string
+		err = db.QueryRow(query, login_data.Username).Scan(&user_id, &hash_pw)
 		switch {
 		case err == sql.ErrNoRows:
 			res.Status = "error"
@@ -62,6 +76,12 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		case err != nil:
 			panic(err)
 		default:
+			err := ValidatePassword(hash_pw, login_data.Password)
+			if err != nil {
+				res.Status = "fail"
+				res.Data = err
+				break
+			}
 			res.Status = "success"
 			res.Data, err = CreateJWT(user_id)
 			if err != nil {

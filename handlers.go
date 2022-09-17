@@ -109,8 +109,13 @@ func PostsHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			page_num = 0
 		}
-		query := fmt.Sprintf("SELECT * FROM posts LIMIT ?,10;")
-		rows, err := db.Query(query, page_num*10)
+		page_size := r.URL.Query().Get("n")
+		page_size_num, err := strconv.Atoi(page_size)
+		if err != nil {
+			page_size_num = 9
+		}
+		query := fmt.Sprintf("SELECT * FROM posts LIMIT ?,?;")
+		rows, err := db.Query(query, page_num*page_size_num, page_size_num)
 		if err != nil {
 			panic(err)
 		}

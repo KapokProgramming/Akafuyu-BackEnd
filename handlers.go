@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/ManSmooth/Akafuyu-BackEnd/vendor/github.com/gorilla/mux"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -66,6 +67,31 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				panic(err)
 			}
+		}
+	}
+	StandardResponseWriter(w, res)
+}
+
+func PostHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	vars := mux.Vars(r)
+	db := createConnectionToDatabase()
+	var res StandardResponse
+	res.Status = "error"
+	switch r.Method {
+	case "GET":
+		var post PostData
+		query := fmt.Sprintf("SELECT title, raw_body FROM posts where posts.post_id=?;")
+		err := db.QueryRow(query, vars["id"]).Scan(&post.Title, &post.RawBody)
+		switch {
+		case err == sql.ErrNoRows:
+			res.Status = "fail"
+			res.Data = fmt.Sprintf("Invalid Post ID: %s", vars["id"])
+		case err != nil:
+			panic(err)
+		default:
+			res.Status = "success"
+			res.Data = post
 		}
 	}
 	StandardResponseWriter(w, res)

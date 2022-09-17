@@ -15,6 +15,7 @@ func main() {
 	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
 	r.HandleFunc("/", HomeHandler)
 	r.HandleFunc("/test", TestHandler)
+	r.HandleFunc("/post/{id:[0-9]+}", PostHandler)
 	r.HandleFunc("/posts", PostsHandler)
 	r.HandleFunc("/json", JSONHandler)
 	r.HandleFunc("/register", RegisterHandler)

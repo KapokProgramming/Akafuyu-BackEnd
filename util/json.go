@@ -1,10 +1,12 @@
-package main
+package util
 
 import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"server/model"
 )
 
 func RowsToMap(rows *sql.Rows) []map[string]interface{} {
@@ -38,7 +40,7 @@ func RowsToMap(rows *sql.Rows) []map[string]interface{} {
 	return rows_map
 }
 
-func StandardResponseWriter(w http.ResponseWriter, res StandardResponse) {
+func StandardResponseWriter(w http.ResponseWriter, res model.StandardResponse) {
 	b, err := json.Marshal(res)
 	if err != nil {
 		fmt.Println(err)
@@ -53,12 +55,4 @@ func JSONRowsToString(rows_map []map[string]interface{}) []byte {
 		panic(err)
 	}
 	return out
-}
-
-func EnableCORS(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type,Authorization")
-		next.ServeHTTP(w, r)
-	})
 }

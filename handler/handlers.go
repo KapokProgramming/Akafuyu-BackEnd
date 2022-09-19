@@ -1,4 +1,4 @@
-package main
+package handler
 
 import (
 	"database/sql"
@@ -8,35 +8,45 @@ import (
 	"net/http"
 	"strconv"
 
+	"server/config"
+	"server/model"
+	"server/util"
+
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
 )
 
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	var res StandardResponse
+	var res model.StandardResponse
 	res.Status = "success"
 	res.Data = "running"
-	StandardResponseWriter(w, res)
+	util.StandardResponseWriter(w, res)
 }
 
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	var res StandardResponse
+	var res model.StandardResponse
 	res.Status = "fail"
 	switch r.Method {
 	case "POST":
-		var register_data RegisterData
+		var register_data model.RegisterData
 		err := json.NewDecoder(r.Body).Decode(&register_data)
 		if err != nil {
 			res.Status = "error"
 			panic(err)
 		}
-		hash_pw, err := GetHashedPassword(register_data.Password)
+		hash_pw, err := util.GetHashedPassword(register_data.Password)
 		if err != nil {
 			panic(err)
 		}
-		db := createConnectionToDatabase()
+
+		db, err := config.OpenDB(config.LoadConfig())
+		if err != nil {
+			w.WriteHeader(500)
+			return // write some error
+		}
+
 		var count int
 		err = db.QueryRow("SELECT count(*) FROM users WHERE username=?", register_data.Username).Scan(&count)
 		if err != nil {
@@ -51,21 +61,27 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 			res.Data = "Username already exists"
 		}
 	}
-	StandardResponseWriter(w, res)
+	util.StandardResponseWriter(w, res)
 }
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	var res StandardResponse
+	var res model.StandardResponse
 	res.Status = "fail"
 	switch r.Method {
 	case "POST":
-		var login_data LoginData
+		var login_data model.LoginData
 		err := json.NewDecoder(r.Body).Decode(&login_data)
 		if err != nil {
 			panic(err)
 		}
-		db := createConnectionToDatabase()
+
+		db, err := config.OpenDB(config.LoadConfig())
+		if err != nil {
+			w.WriteHeader(500)
+			return // write some error
+		}
+
 		query := "SELECT user_id,password FROM users WHERE username=?;"
 		var user_id int
 		var hash_pw string
@@ -77,31 +93,37 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		case err != nil:
 			panic(err)
 		default:
-			err := ValidatePassword(login_data.Password, hash_pw)
+			err := util.ValidatePassword(login_data.Password, hash_pw)
 			if err != nil {
 				res.Status = "fail"
 				res.Data = err
 				break
 			}
 			res.Status = "success"
-			res.Data, err = CreateJWT(user_id)
+			res.Data, err = util.CreateJWT(user_id)
 			if err != nil {
 				panic(err)
 			}
 		}
 	}
-	StandardResponseWriter(w, res)
+	util.StandardResponseWriter(w, res)
 }
 
 func PostHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	vars := mux.Vars(r)
-	db := createConnectionToDatabase()
-	var res StandardResponse
+
+	db, err := config.OpenDB(config.LoadConfig())
+	if err != nil {
+		w.WriteHeader(500)
+		return // write some error
+	}
+
+	var res model.StandardResponse
 	res.Status = "error"
 	switch r.Method {
 	case "GET":
-		var post PostData
+		var post model.PostData
 		query := fmt.Sprintf("SELECT title, raw_body FROM posts where posts.post_id=?;")
 		err := db.QueryRow(query, vars["id"]).Scan(&post.Title, &post.RawBody)
 		switch {
@@ -115,13 +137,19 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 			res.Data = post
 		}
 	}
-	StandardResponseWriter(w, res)
+	util.StandardResponseWriter(w, res)
 }
 
 func PostsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	db := createConnectionToDatabase()
-	var res StandardResponse
+	db, err := config.OpenDB(config.LoadConfig())
+
+	if err != nil {
+		w.WriteHeader(500)
+		return // write some error
+	}
+
+	var res model.StandardResponse
 	res.Status = "error"
 	switch r.Method {
 	case "GET":
@@ -142,9 +170,9 @@ func PostsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		defer rows.Close()
 		res.Status = "success"
-		res.Data = RowsToMap(rows)
+		res.Data = util.RowsToMap(rows)
 	case "POST":
-		var post_data PostData
+		var post_data model.PostData
 		err := json.NewDecoder(r.Body).Decode(&post_data)
 		if err != nil {
 			panic(err)
@@ -153,7 +181,7 @@ func PostsHandler(w http.ResponseWriter, r *http.Request) {
 		db.Exec(query, post_data.Title, post_data.RawBody)
 		res.Status = "success"
 	}
-	StandardResponseWriter(w, res)
+	util.StandardResponseWriter(w, res)
 }
 
 func JSONHandler(w http.ResponseWriter, r *http.Request) {
@@ -161,7 +189,7 @@ func JSONHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		return
 	}
-	var res StandardResponse
+	var res model.StandardResponse
 	res.Status = "success"
 	reqbody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -174,7 +202,8 @@ func JSONHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	res.Data = body
 	fmt.Printf("%+v", body)
-	StandardResponseWriter(w, res)
+	// StandardResponseWriter(w, res)
+
 }
 
 func TestHandler(w http.ResponseWriter, r *http.Request) {
@@ -182,17 +211,23 @@ func TestHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		return
 	}
-	var res StandardResponse
+	var res model.StandardResponse
 	res.Status = "success"
 	query := "SELECT NOW();"
-	db := createConnectionToDatabase()
+
+	db, err := config.OpenDB(config.LoadConfig())
+	if err != nil {
+		w.WriteHeader(500)
+		return // write some error
+	}
+
 	rows, err := db.Query(query)
 	if err != nil {
 		res.Status = "error"
 	} else {
-		res.Data = RowsToMap(rows)
+		res.Data = util.RowsToMap(rows)
 	}
-	StandardResponseWriter(w, res)
+	util.StandardResponseWriter(w, res)
 }
 
 func EmptyJsonHandler(w http.ResponseWriter, r *http.Request) {

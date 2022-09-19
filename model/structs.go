@@ -1,4 +1,4 @@
-package main
+package model
 
 type PostData struct {
 	Title   string `json:"title"`

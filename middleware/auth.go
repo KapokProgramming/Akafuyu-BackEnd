@@ -1,29 +1,61 @@
-package main
+package middleware
 
 import (
 	"database/sql"
 	"fmt"
+	"net/http"
 	"os"
-	"strconv"
+	"server/config"
+	"server/model"
+	"server/util"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
-	"golang.org/x/crypto/bcrypt"
 )
 
-func CreateJWT(user_id int) (string, error) {
-	claims := &jwt.RegisteredClaims{
-		ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
-		IssuedAt:  jwt.NewNumericDate(time.Now()),
-		NotBefore: jwt.NewNumericDate(time.Now()),
-		Issuer:    strconv.Itoa(user_id),
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	ss, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
-	if err != nil {
-		return "", err
-	}
-	return ss, nil
+func ValidateToken(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		w.Header().Add("Vary", "Authorization")
+
+		authHeader := r.Header.Get("Authorization")
+
+		headerPart := strings.Split(authHeader, " ")
+
+		if len(headerPart) != 2 {
+			// app.logger.Println("error :" + authHeader)
+			w.WriteHeader(400)
+			util.StandardResponseWriter(w, model.StandardResponse{
+				Status: "fail",
+				Data:   "invalid auth header",
+			})
+			return
+		}
+
+		if headerPart[0] != "Bearer" {
+			w.WriteHeader(400)
+			util.StandardResponseWriter(w, model.StandardResponse{
+				Status: "fail",
+				Data:   "invalid auth header",
+			})
+			return
+		}
+
+		token := headerPart[1]
+		// do some check
+
+		if len(token) <= 0 {
+			w.WriteHeader(401)
+			util.StandardResponseWriter(w, model.StandardResponse{
+				Status: "fail",
+				Data:   "unauthorized",
+			})
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }
 
 func ValidateJWT(signed_string string) (int, error) {
@@ -49,7 +81,12 @@ func ValidateJWT(signed_string string) (int, error) {
 		if time.Now().After(expiry.Time) {
 			return -1, fmt.Errorf("Expired: %v", expiry)
 		}
-		db := createConnectionToDatabase()
+
+		db, err := config.OpenDB(config.LoadConfig())
+		if err != nil {
+			return -1, fmt.Errorf("Failed to connect to db: %v", claims["Issuer"])
+		}
+
 		query := "SELECT user_id FROM users WHERE user_id=?;"
 		err = db.QueryRow(query, claims["Issuer"]).Scan(&user_id)
 		switch {
@@ -69,16 +106,4 @@ func ValidateJWT(signed_string string) (int, error) {
 		return -1, nil
 	}
 	return user_id, nil
-}
-
-func GetHashedPassword(password string) (string, error) {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		return "", err
-	}
-	return string(hashedPassword), nil
-}
-
-func ValidatePassword(password string, hashedPassword string) error {
-	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 }

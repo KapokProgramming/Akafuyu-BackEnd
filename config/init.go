@@ -1,7 +1,6 @@
 package config
 
 import (
-	"flag"
 	"server/util"
 )
 
@@ -28,21 +27,13 @@ func LoadConfig() Config {
 		port = "7700"
 	}
 
-	// cfg.Port = port
-	// cfg.Env = env.MustGet("ENV")
+	cfg.Port = util.MustGet("PORT")
+	cfg.Env = util.MustGet("ENV")
+	cfg.db.Host = util.MustGet("DB_HOST")
+	cfg.db.Port = util.MustGet("DB_PORT")
+	cfg.db.User = util.MustGet("DB_USER")
+	cfg.db.Password = util.MustGet("DB_PASSWORD")
+	cfg.db.Dbname = util.MustGet("DB")
 
-	flag.StringVar(&cfg.Port, "port", port, "Server port will be listen on")
-	flag.StringVar(&cfg.Env, "environment", util.MustGet("ENV"), "Application environment")
-	// cfg.db.Host = env.MustGet("DBHOST")
-	// cfg.db.Port = env.MustGet("DBPORT")
-	// cfg.db.User = env.MustGet("DBUSER")
-	// cfg.db.Password = env.MustGet("DBPASS")
-	// cfg.db.Dbname = env.MustGet("DBNAME")
-
-	flag.StringVar(&cfg.db.Host, "database host", util.MustGet("DBHOST"), "some host")
-	flag.StringVar(&cfg.db.Port, "database port", util.MustGet("DBPORT"), "some port")
-	flag.StringVar(&cfg.db.User, "database user", util.MustGet("DBUSER"), "user")
-	flag.StringVar(&cfg.db.Password, "database password", util.MustGet("DBPASS"), "password")
-	flag.StringVar(&cfg.db.Dbname, "database name", util.MustGet("DBNAME"), "db name")
 	return cfg
 }

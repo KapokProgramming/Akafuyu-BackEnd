@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
+	"time"
+
+	"server/config"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -22,6 +24,22 @@ func main() {
 	r.HandleFunc("/login", LoginHandler)
 
 	r.NotFoundHandler = http.HandlerFunc(EmptyJsonHandler)
+
+	cfg := config.LoadConfig()
+
+	srv := &http.Server{
+		Addr:         fmt.Sprintf(":%s", cfg.Port),
+		Handler:      handlers.CORS(headersOk, methodsOk)(r),
+		IdleTimeout:  time.Minute,
+		ReadTimeout:  time.Second * 10,
+		WriteTimeout: time.Second * 30,
+	}
+
 	fmt.Println("Listening on :7700")
-	log.Fatal(http.ListenAndServe(":7700", handlers.CORS(headersOk, methodsOk)(r)))
+	err := srv.ListenAndServe()
+	if err != nil {
+		panic("Failed to run server")
+	}
+
+	// log.Fatal(http.ListenAndServe(":7700", )
 }

@@ -65,12 +65,14 @@ func TokenTestHandler(w http.ResponseWriter, r *http.Request) {
 	reqToken := r.Header.Get("Authorization")
 	splitToken := strings.Split(reqToken, "Bearer ")
 	reqToken = splitToken[1]
+	fmt.Println(reqToken)
 	user_id, err := ValidateJWT(reqToken)
 	if err != nil {
 		res.Status = "error"
-		panic(err)
+		res.Data = err
+		StandardResponseWriter(w, res)
+		return
 	}
-	fmt.Println(reqToken)
 	fmt.Println(user_id)
 	db := createConnectionToDatabase()
 	query := "SELECT * FROM users WHERE user_id=?;"

@@ -56,7 +56,42 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func UserHandler(w http.ResponseWriter, r *http.Request) {
-	return
+	vars := mux.Vars(r)
+	var res StandardResponse
+	var user_id int
+	var err error
+	var user UserData
+	if len(vars["id"]) > 0 {
+		user_id, err = strconv.Atoi(vars["id"])
+		if err != nil {
+			res.Status = "error"
+			res.Data = err.Error()
+		}
+	} else {
+		reqToken := r.Header.Get("Authorization")
+		fmt.Printf("reqToken: %v", reqToken)
+		if len(reqToken) > 0 {
+			splitToken := strings.Split(reqToken, "Bearer ")
+			reqToken = splitToken[1]
+			user_id, err = ValidateJWT(reqToken)
+			if err != nil {
+				res.Status = "fail"
+				res.Data = "Invalid token"
+				StandardResponseWriter(w, res)
+				return
+			}
+		} else {
+			res.Status = "fail"
+			res.Data = "Not Logged in"
+			StandardResponseWriter(w, res)
+			return
+		}
+	}
+	query := "SELECT * FROM users WHERE user_id=?;"
+	db.QueryRow(query, user_id).Scan(&user.UserID, &user.Username, &user.DisplayName, &user.Password, &user.Email, &user.Bio, &user.Timestamp)
+	res.Status = "success"
+	res.Data = user
+	StandardResponseWriter(w, res)
 }
 
 func TokenTestHandler(w http.ResponseWriter, r *http.Request) {

@@ -16,6 +16,7 @@ func main() {
 	r.HandleFunc("/", HomeHandler)
 	r.HandleFunc("/test", TestHandler)
 	r.HandleFunc("/post/{id:[0-9]+}", PostHandler)
+	r.HandleFunc("/user/{id:[0-9]+}", UserHandler)
 	r.HandleFunc("/posts", PostsHandler)
 	r.HandleFunc("/json", JSONHandler)
 	r.HandleFunc("/register", RegisterHandler)

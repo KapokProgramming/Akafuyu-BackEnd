@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
@@ -51,6 +52,32 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 			res.Data = "Username already exists"
 		}
 	}
+	StandardResponseWriter(w, res)
+}
+
+func UserHandler(w http.ResponseWriter, r *http.Request) {
+	return
+}
+
+func TokenTestHandler(w http.ResponseWriter, r *http.Request) {
+	var res StandardResponse
+	w.Header().Set("Content-Type", "application/json")
+	reqToken := r.Header.Get("Authorization")
+	splitToken := strings.Split(reqToken, "Bearer ")
+	reqToken = splitToken[1]
+	user_id, err := ValidateJWT(reqToken)
+	if err != nil {
+		res.Status = "error"
+		panic(err)
+	}
+	fmt.Println(reqToken)
+	fmt.Println(user_id)
+	db := createConnectionToDatabase()
+	query := "SELECT * FROM users WHERE user_id=?;"
+	var user UserData
+	err = db.QueryRow(query, user_id).Scan(&user.UserID, &user.Username, &user.DisplayName, &user.Password, &user.Email, &user.Bio, &user.Timestamp)
+	res.Status = "success"
+	res.Data = user
 	StandardResponseWriter(w, res)
 }
 

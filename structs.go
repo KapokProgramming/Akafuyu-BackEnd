@@ -20,3 +20,13 @@ type StandardResponse struct {
 	Status string      `json:"status"`
 	Data   interface{} `json:"data"`
 }
+
+type UserData struct {
+	UserID      int    `json:"user_id"`
+	Username    string `json:"username"`
+	DisplayName string `json:"display_name"`
+	Password    string `json:"password"`
+	Email       string `json:"email"`
+	Bio         string `json:"bio"`
+	Timestamp   string `json:"timestamp"`
+}

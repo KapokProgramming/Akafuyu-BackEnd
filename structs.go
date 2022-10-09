@@ -1,5 +1,7 @@
 package main
 
+import "database/sql"
+
 type PostData struct {
 	PostTitle string `json:"post_title"`
 	PostBody  string `json:"post_body"`
@@ -28,11 +30,11 @@ type StandardResponse struct {
 }
 
 type UserData struct {
-	UserID      int    `json:"user_id"`
-	Username    string `json:"username"`
-	DisplayName string `json:"display_name"`
-	Password    string `json:"password"`
-	Email       string `json:"email"`
-	Bio         string `json:"bio"`
-	Timestamp   string `json:"timestamp"`
+	UserID      int            `json:"user_id"`
+	Username    string         `json:"username"`
+	DisplayName sql.NullString `json:"display_name"`
+	Password    string         `json:"password"`
+	Email       string         `json:"email"`
+	Bio         sql.NullString `json:"bio"`
+	Timestamp   string         `json:"timestamp"`
 }

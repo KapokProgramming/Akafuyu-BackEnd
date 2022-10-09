@@ -53,13 +53,10 @@ func ValidateJWT(signed_string string) (int, error) {
 			panic(err)
 		}
 	} else {
-		return -1, nil
+		return -1, fmt.Errorf("Invalid token: %v, ok: %v", token, ok)
 	}
 	if err != nil {
 		return -1, err
-	}
-	if token.Valid {
-		return -1, nil
 	}
 	return user_id, nil
 }

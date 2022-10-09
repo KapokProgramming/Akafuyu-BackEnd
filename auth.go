@@ -35,18 +35,12 @@ func ValidateJWT(signed_string string) (int, error) {
 	})
 	var user_id int
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		expiresAt, ok := claims["exp"].(jwt.NumericDate)
-		if !ok {
-			return -1, fmt.Errorf("Unexpected ExpiresAt: %v", claims["exp"])
-		}
-		notBefore, ok := claims["nbf"].(jwt.NumericDate)
-		if !ok {
-			return -1, fmt.Errorf("Unexpected NotBefore: %v", claims["nbf"])
-		}
-		if time.Now().Before(notBefore.Time) {
+		expiresAt := time.Unix(int64(claims["exp"].(float64)), 0)
+		notBefore := time.Unix(int64(claims["nbf"].(float64)), 0)
+		if time.Now().Before(notBefore) {
 			return -1, fmt.Errorf("Invalid time: %v", notBefore)
 		}
-		if time.Now().After(expiresAt.Time) {
+		if time.Now().After(expiresAt) {
 			return -1, fmt.Errorf("Expired: %v", expiresAt)
 		}
 		db := createConnectionToDatabase()

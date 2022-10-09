@@ -169,13 +169,19 @@ func PostsHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			page_size_num = 12
 		}
+		var user_id int
 		reqToken := r.Header.Get("Authorization")
-		splitToken := strings.Split(reqToken, "Bearer ")
-		reqToken = splitToken[1]
+		if len(reqToken) > 0 {
+			splitToken := strings.Split(reqToken, "Bearer ")
+			reqToken = splitToken[1]
+			user_id, err = ValidateJWT(reqToken)
+			if err != nil {
+				user_id = -1
+			}
+		}
 		var query string
 		var rows *sql.Rows
-		user_id, err := ValidateJWT(reqToken)
-		if err != nil {
+		if user_id == -1 {
 			query = "SELECT * FROM posts LIMIT ?,?;"
 			rows, err = db.Query(query, page_num*page_size_num, page_size_num)
 		} else {

@@ -55,40 +55,45 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	StandardResponseWriter(w, res)
 }
 
-func UserHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
+func SelfUserHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	var res StandardResponse
 	var user_id int
 	var err error
 	var user UserData
-	if len(vars["id"]) > 0 {
-		user_id, err = strconv.Atoi(vars["id"])
+	reqToken := r.Header.Get("Authorization")
+	if len(reqToken) > 0 {
+		splitToken := strings.Split(reqToken, "Bearer ")
+		reqToken = splitToken[1]
+		user_id, err = ValidateJWT(reqToken)
 		if err != nil {
-			res.Status = "error"
-			res.Data = err.Error()
-		}
-	} else {
-		reqToken := r.Header.Get("Authorization")
-		fmt.Printf("reqToken: %v", reqToken)
-		if len(reqToken) > 0 {
-			splitToken := strings.Split(reqToken, "Bearer ")
-			reqToken = splitToken[1]
-			user_id, err = ValidateJWT(reqToken)
-			if err != nil {
-				res.Status = "fail"
-				res.Data = "Invalid token"
-				StandardResponseWriter(w, res)
-				return
-			}
-		} else {
 			res.Status = "fail"
-			res.Data = "Not Logged in"
+			res.Data = "Invalid token"
 			StandardResponseWriter(w, res)
 			return
 		}
+	} else {
+		res.Status = "fail"
+		res.Data = "Not Logged in"
+		StandardResponseWriter(w, res)
+		return
 	}
+	db := createConnectionToDatabase()
 	query := "SELECT * FROM users WHERE user_id=?;"
 	db.QueryRow(query, user_id).Scan(&user.UserID, &user.Username, &user.DisplayName, &user.Password, &user.Email, &user.Bio, &user.Timestamp)
+	res.Status = "success"
+	res.Data = user
+	StandardResponseWriter(w, res)
+}
+
+func UserHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	vars := mux.Vars(r)
+	var res StandardResponse
+	var user UserData
+	db := createConnectionToDatabase()
+	query := "SELECT * FROM users WHERE user_id=?;"
+	db.QueryRow(query, vars["id"]).Scan(&user.UserID, &user.Username, &user.DisplayName, &user.Password, &user.Email, &user.Bio, &user.Timestamp)
 	res.Status = "success"
 	res.Data = user
 	StandardResponseWriter(w, res)
@@ -110,7 +115,6 @@ func TokenTestHandler(w http.ResponseWriter, r *http.Request) {
 	db := createConnectionToDatabase()
 	query := "SELECT * FROM users WHERE user_id=?;"
 	var user UserData
-	// err = db.QueryRow(query, user_id).Scan(&user)
 	err = db.QueryRow(query, user_id).Scan(&user.UserID, &user.Username, &user.DisplayName, &user.Password, &user.Email, &user.Bio, &user.Timestamp)
 	if err != nil {
 		res.Status = "error"
@@ -206,7 +210,6 @@ func PostsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		var user_id int
 		reqToken := r.Header.Get("Authorization")
-		fmt.Printf("reqToken: %v", reqToken)
 		if len(reqToken) > 0 {
 			splitToken := strings.Split(reqToken, "Bearer ")
 			reqToken = splitToken[1]
@@ -260,7 +263,6 @@ func JSONHandler(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 	res.Data = body
-	fmt.Printf("%+v", body)
 	StandardResponseWriter(w, res)
 }
 

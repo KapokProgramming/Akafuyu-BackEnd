@@ -1,8 +1,8 @@
 package main
 
 type PostData struct {
-	Title   string `json:"title"`
-	RawBody string `json:"raw_body"`
+	PostTitle string `json:"post_title"`
+	PostBody  string `json:"post_body"`
 }
 
 type RegisterData struct {

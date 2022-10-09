@@ -77,7 +77,8 @@ func TokenTestHandler(w http.ResponseWriter, r *http.Request) {
 	db := createConnectionToDatabase()
 	query := "SELECT * FROM users WHERE user_id=?;"
 	var user UserData
-	err = db.QueryRow(query, user_id).Scan(&user.UserID, &user.Username, &user.DisplayName, &user.Password, &user.Email, &user.Bio, &user.Timestamp)
+	err = db.QueryRow(query, user_id).Scan(&user)
+	// err = db.QueryRow(query, user_id).Scan(&user.UserID, &user.Username, &user.DisplayName, &user.Password, &user.Email, &user.Bio, &user.Timestamp)
 	res.Status = "success"
 	res.Data = user
 	StandardResponseWriter(w, res)
@@ -131,8 +132,8 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
 		var post PostData
-		query := fmt.Sprintf("SELECT title, raw_body FROM posts where posts.post_id=?;")
-		err := db.QueryRow(query, vars["id"]).Scan(&post.Title, &post.RawBody)
+		query := fmt.Sprintf("SELECT post_title, post_body FROM posts where posts.post_id=?;")
+		err := db.QueryRow(query, vars["id"]).Scan(&post.PostTitle, &post.PostBody)
 		switch {
 		case err == sql.ErrNoRows:
 			res.Status = "fail"
@@ -179,7 +180,7 @@ func PostsHandler(w http.ResponseWriter, r *http.Request) {
 			panic(err)
 		}
 		query := "INSERT INTO posts (title, raw_body) VALUES (?, ?);"
-		db.Exec(query, post_data.Title, post_data.RawBody)
+		db.Exec(query, post_data.PostTitle, post_data.PostBody)
 		res.Status = "success"
 	}
 	StandardResponseWriter(w, res)

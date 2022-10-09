@@ -171,6 +171,7 @@ func PostsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		var user_id int
 		reqToken := r.Header.Get("Authorization")
+		fmt.Printf("reqToken: %v", reqToken)
 		if len(reqToken) > 0 {
 			splitToken := strings.Split(reqToken, "Bearer ")
 			reqToken = splitToken[1]

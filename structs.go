@@ -3,6 +3,7 @@ package main
 import "database/sql"
 
 type PostData struct {
+	Author    int    `json:"author"`
 	PostTitle string `json:"post_title"`
 	PostBody  string `json:"post_body"`
 }

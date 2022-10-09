@@ -185,8 +185,8 @@ func PostsHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			panic(err)
 		}
-		query := "INSERT INTO posts (title, raw_body) VALUES (?, ?);"
-		db.Exec(query, post_data.PostTitle, post_data.PostBody)
+		query := "INSERT INTO posts (post_title, post_body, author) VALUES (?, ?, ?);"
+		db.Exec(query, post_data.PostTitle, post_data.PostBody, post_data.Author)
 		res.Status = "success"
 	}
 	StandardResponseWriter(w, res)

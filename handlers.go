@@ -65,7 +65,6 @@ func TokenTestHandler(w http.ResponseWriter, r *http.Request) {
 	reqToken := r.Header.Get("Authorization")
 	splitToken := strings.Split(reqToken, "Bearer ")
 	reqToken = splitToken[1]
-	fmt.Println(reqToken)
 	user_id, err := ValidateJWT(reqToken)
 	if err != nil {
 		res.Status = "error"
@@ -73,7 +72,6 @@ func TokenTestHandler(w http.ResponseWriter, r *http.Request) {
 		StandardResponseWriter(w, res)
 		return
 	}
-	fmt.Println(user_id)
 	db := createConnectionToDatabase()
 	query := "SELECT * FROM users WHERE user_id=?;"
 	var user UserData
@@ -171,8 +169,19 @@ func PostsHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			page_size_num = 12
 		}
-		query := "SELECT * FROM posts LIMIT ?,?;"
-		rows, err := db.Query(query, page_num*page_size_num, page_size_num)
+		reqToken := r.Header.Get("Authorization")
+		splitToken := strings.Split(reqToken, "Bearer ")
+		reqToken = splitToken[1]
+		var query string
+		var rows *sql.Rows
+		user_id, err := ValidateJWT(reqToken)
+		if err != nil {
+			query = "SELECT * FROM posts LIMIT ?,?;"
+			rows, err = db.Query(query, page_num*page_size_num, page_size_num)
+		} else {
+			query = "SELECT posts.* FROM `posts` INNER JOIN users_follow ON users_follow.follower_id=? AND posts.author=users_follow.followed_id AND posts.isFollowerOnlyPost=1 UNION SELECT * FROM `posts` WHERE posts.isFollowerOnlyPost=0 ORDER BY post_id LIMIT ?,?;"
+			rows, err = db.Query(query, user_id, page_num*page_size_num, page_size_num)
+		}
 		if err != nil {
 			panic(err)
 		}
@@ -185,8 +194,8 @@ func PostsHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			panic(err)
 		}
-		query := "INSERT INTO posts (post_title, post_body, author) VALUES (?, ?, ?);"
-		db.Exec(query, post_data.PostTitle, post_data.PostBody, post_data.Author)
+		query := "INSERT INTO posts (post_title, post_body, author, isFollowerOnlyPost) VALUES (?, ?, ?, ?);"
+		db.Exec(query, post_data.PostTitle, post_data.PostBody, post_data.Author, post_data.FollowerOnly)
 		res.Status = "success"
 	}
 	StandardResponseWriter(w, res)

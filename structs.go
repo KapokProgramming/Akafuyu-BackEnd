@@ -3,9 +3,10 @@ package main
 import "database/sql"
 
 type PostData struct {
-	Author    string `json:"author"`
-	PostTitle string `json:"post_title"`
-	PostBody  string `json:"post_body"`
+	Author       string `json:"author"`
+	PostTitle    string `json:"post_title"`
+	PostBody     string `json:"post_body"`
+	FollowerOnly string `json:"follower_only"`
 }
 
 type PostWithAuthorData struct {

@@ -138,7 +138,7 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
 		var post PostWithAuthorData
-		query := "SELECT posts.post_title, posts.post_body, IFNULL(users.display_name, users.username), COUNT(DISTINCT users_star.us_id) FROM posts  INNER JOIN users ON posts.author=users.user_id AND post_id=? LEFT JOIN users_star ON posts.post_id=users_star.post_id;"
+		query := "SELECT posts.post_title, posts.post_body, IFNULL(users.display_name, users.username), COUNT(DISTINCT users_star.us_id) FROM posts INNER JOIN users ON posts.author=users.user_id AND post_id=? LEFT JOIN users_star ON posts.post_id=users_star.post_id GROUP BY posts.post_id;"
 		err := db.QueryRow(query, vars["id"]).Scan(&post.PostTitle, &post.PostBody, &post.Author)
 		switch {
 		case err == sql.ErrNoRows:

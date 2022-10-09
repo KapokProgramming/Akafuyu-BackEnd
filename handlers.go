@@ -77,8 +77,14 @@ func TokenTestHandler(w http.ResponseWriter, r *http.Request) {
 	db := createConnectionToDatabase()
 	query := "SELECT * FROM users WHERE user_id=?;"
 	var user UserData
-	err = db.QueryRow(query, user_id).Scan(&user)
-	// err = db.QueryRow(query, user_id).Scan(&user.UserID, &user.Username, &user.DisplayName, &user.Password, &user.Email, &user.Bio, &user.Timestamp)
+	// err = db.QueryRow(query, user_id).Scan(&user)
+	err = db.QueryRow(query, user_id).Scan(&user.UserID, &user.Username, &user.DisplayName, &user.Password, &user.Email, &user.Bio, &user.Timestamp)
+	if err != nil {
+		res.Status = "error"
+		res.Data = err.Error()
+		StandardResponseWriter(w, res)
+		return
+	}
 	res.Status = "success"
 	res.Data = user
 	StandardResponseWriter(w, res)
@@ -131,9 +137,9 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 	res.Status = "error"
 	switch r.Method {
 	case "GET":
-		var post PostData
-		query := fmt.Sprintf("SELECT post_title, post_body FROM posts where posts.post_id=?;")
-		err := db.QueryRow(query, vars["id"]).Scan(&post.PostTitle, &post.PostBody)
+		var post PostWithAuthorData
+		query := "SELECT posts.post_title, posts.post_body, IFNULL(users.display_name, users.username) FROM posts INNER JOIN users ON posts.author=users.user_id AND post_id=?;"
+		err := db.QueryRow(query, vars["id"]).Scan(&post.PostTitle, &post.PostBody, &post.Author)
 		switch {
 		case err == sql.ErrNoRows:
 			res.Status = "fail"
@@ -165,7 +171,7 @@ func PostsHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			page_size_num = 12
 		}
-		query := fmt.Sprintf("SELECT * FROM posts LIMIT ?,?;")
+		query := "SELECT * FROM posts LIMIT ?,?;"
 		rows, err := db.Query(query, page_num*page_size_num, page_size_num)
 		if err != nil {
 			panic(err)

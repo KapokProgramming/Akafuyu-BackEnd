@@ -5,6 +5,12 @@ type PostData struct {
 	PostBody  string `json:"post_body"`
 }
 
+type PostWithAuthorData struct {
+	PostTitle string `json:"post_title"`
+	PostBody  string `json:"post_body"`
+	Author    string `json:"author"`
+}
+
 type RegisterData struct {
 	Username string `json:"username"`
 	Password string `json:"password"`

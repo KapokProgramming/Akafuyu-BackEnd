@@ -35,26 +35,26 @@ func ValidateJWT(signed_string string) (int, error) {
 	})
 	var user_id int
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		expiry, ok := claims["ExpiresAt"].(jwt.NumericDate)
+		expiresAt, ok := claims["exp"].(jwt.NumericDate)
 		if !ok {
-			return -1, fmt.Errorf("Unexpected ExpiresAt: %v", claims["ExpiresAt"])
+			return -1, fmt.Errorf("Unexpected ExpiresAt: %v", claims["exp"])
 		}
-		notBefore, ok := claims["NotBefore"].(jwt.NumericDate)
+		notBefore, ok := claims["nbf"].(jwt.NumericDate)
 		if !ok {
-			return -1, fmt.Errorf("Unexpected NotBefore: %v", claims["NotBefore"])
+			return -1, fmt.Errorf("Unexpected NotBefore: %v", claims["nbf"])
 		}
 		if time.Now().Before(notBefore.Time) {
 			return -1, fmt.Errorf("Invalid time: %v", notBefore)
 		}
-		if time.Now().After(expiry.Time) {
-			return -1, fmt.Errorf("Expired: %v", expiry)
+		if time.Now().After(expiresAt.Time) {
+			return -1, fmt.Errorf("Expired: %v", expiresAt)
 		}
 		db := createConnectionToDatabase()
 		query := "SELECT user_id FROM users WHERE user_id=?;"
-		err = db.QueryRow(query, claims["Issuer"]).Scan(&user_id)
+		err = db.QueryRow(query, claims["iss"]).Scan(&user_id)
 		switch {
 		case err == sql.ErrNoRows:
-			return -1, fmt.Errorf("Invalid user_id: %v", claims["Issuer"])
+			return -1, fmt.Errorf("Invalid user_id: %v", claims["iss"])
 		case err != nil:
 			panic(err)
 		}

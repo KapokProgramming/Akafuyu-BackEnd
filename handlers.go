@@ -69,7 +69,7 @@ func TokenTestHandler(w http.ResponseWriter, r *http.Request) {
 	user_id, err := ValidateJWT(reqToken)
 	if err != nil {
 		res.Status = "error"
-		res.Data = err
+		res.Data = err.Error()
 		StandardResponseWriter(w, res)
 		return
 	}

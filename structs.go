@@ -11,6 +11,7 @@ type PostWithAuthorData struct {
 	PostTitle string `json:"post_title"`
 	PostBody  string `json:"post_body"`
 	Author    string `json:"author"`
+	StarCount string `json:"star_count"`
 }
 
 type RegisterData struct {

@@ -8,3 +8,5 @@
     #### Single post endpoint
 - `GET POST /posts`
     #### Multiple post by page Query: page={Page number}, n={Page size}
+- `GET /tokentest`
+    #### Returns user data based on given JWT token(for Testing only)

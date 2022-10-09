@@ -52,7 +52,6 @@ func ValidateJWT(signed_string string) (int, error) {
 		case err != nil:
 			panic(err)
 		}
-		defer db.Close()
 	} else {
 		return -1, nil
 	}

@@ -20,6 +20,7 @@ func main() {
 	r.HandleFunc("/json", JSONHandler)
 	r.HandleFunc("/register", RegisterHandler)
 	r.HandleFunc("/login", LoginHandler)
+	r.HandleFunc("/tokentest", TokenTestHandler)
 
 	r.NotFoundHandler = http.HandlerFunc(EmptyJsonHandler)
 	fmt.Println("Listening on :7700")

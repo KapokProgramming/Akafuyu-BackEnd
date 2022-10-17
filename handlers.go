@@ -221,10 +221,10 @@ func PostsHandler(w http.ResponseWriter, r *http.Request) {
 		var query string
 		var rows *sql.Rows
 		if user_id == -1 {
-			query = "SELECT * FROM posts LIMIT ?,?;"
+			query = "SELECT posts.*, IFNULL(users.display_name, users.username) AS author_name FROM posts LEFT JOIN users ON posts.author=users.user_id LIMIT ?,?;"
 			rows, err = db.Query(query, page_num*page_size_num, page_size_num)
 		} else {
-			query = "SELECT posts.* FROM `posts` INNER JOIN users_follow ON users_follow.follower_id=? AND posts.author=users_follow.followed_id AND posts.isFollowerOnlyPost=1 UNION SELECT * FROM `posts` WHERE posts.isFollowerOnlyPost=0 ORDER BY post_id LIMIT ?,?;"
+			query = "SELECT posts.*, IFNULL(users.display_name, users.username) AS author_name FROM posts INNER JOIN users_follow ON users_follow.follower_id=? AND posts.author=users_follow.followed_id AND posts.isFollowerOnlyPost=1 LEFT JOIN users ON users.user_id=posts.author UNION SELECT posts.*, IFNULL(users.display_name, users.username) AS author_name FROM posts INNER JOIN users ON posts.author=users.user_id AND posts.isFollowerOnlyPost=0 ORDER BY post_id LIMIT ?,?;"
 			rows, err = db.Query(query, user_id, page_num*page_size_num, page_size_num)
 		}
 		if err != nil {
